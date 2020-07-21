@@ -1,0 +1,17 @@
+---
+title: "Untitled"
+author: "Minh Chau Van Nguyen"
+date: "21/07/2020"
+output: html_document
+---
+
+```{r results="asis"}
+n <- 100
+x <- rnorm(n)
+y <- 2*x + rnorm(n)
+out <- lm(y ~ x)
+library(xtable)
+tab <- xtable(summary(out)$coef, digits=c(0, 2, 2, 1, 2))
+print(tab, type="html")
+
+```

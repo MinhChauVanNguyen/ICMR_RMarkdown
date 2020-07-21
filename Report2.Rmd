@@ -1,0 +1,124 @@
+---
+title: "IMCR in patients under 18 years old"
+header-includes:
+- \usepackage{graphicx}
+- \usepackage{float}
+author: "MD Hung Dung Van"
+date: "17/07/2020"
+output:
+  bookdown::pdf_document2:
+    css: style.css
+    number_sections: yes
+---
+
+<br>
+
+# Design Study Objectives
+<hr>
+
+<span style="color:blue;">Population</span>: N = 119 patients under 18 years old with either a CE ring implant, a Band implant or neither of those implants.
+
+<span style="color:blue;">Proposals</span>:
+
+ - For patients with **< 26mm (small size) CE ring**, there is a higher chance of relapse (which leads to re-operation/redo) due to <span style="background-color:#FFE1FF;">mitral stenosis (MS)</span>. 
+ - For patients with **band**, there is a higher chance of relapse due to <span style="background-color:#FFE1FF;">mitral regurgiation (MR)</span>
+
+<span style="color:blue;">Aim</span>: to determine whether the above proposals are true by comparing the MS rate and the MR rate between the Band and CE ring groups in the population. 
+
+<span style="color:blue;">Outcome variable</span>: Redo reason (qualitative information)
+
+* 3 levels
+  + 0 - "NONE"
+  + 1 - "MS"
+  + 2 - "MR"
+  
+<span style="color:blue;">Potential method used</span> : Logistic regression (to be confirmed)
+
+<br>
+
+
+# Descriptive Statistics
+
+<hr>
+
+## Flow chart of the study
+
+```{r echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
+library(highcharter)
+library(DiagrammeR)
+library(dplyr)
+library(assertthat)
+```
+
+
+```{r echo = FALSE, eval = FALSE}
+grViz("digraph flowchart {
+    # node definitions with substituted label text
+    node [fontname = Helvetica, style = filled, color = HotPink, fontsize = 20]
+    edge [arrowhead = vee, penwidth = 2]
+    a [label =  <<b>Under 18 yrs old patients</b><br/><font point-size = '15'>N = 119</font>>, width = 4, fillcolor = LightSeaGreen, shape = rectangle, style = 'rounded, filled', alpha = 0.2]
+    b [label = <<b>With CE ring</b><br/><font point-size = '15'>n = 78</font><br/>>, fillcolor = PaleTurquoise, height = 0.5]
+    c [label = <<b>With band</b><br/><font point-size = '15'>n = 34</font><br/>>, fillcolor = PaleTurquoise, height = 0.6]
+    d [label = <<b>Without CE ring or band</b><br/><font point-size = '15'>n = 7</font><br/>>, fillcolor = PaleTurquoise, height = 0.6, width = 3]
+    e [label = <<b>Group 1: &lt; 26 mm</b><br/><font point-size = '15'>n = 35</font><br/>>, fillcolor = Lavender, height = 0.5]
+    f [label = <<b>Group 2: &ge; 26 mm</b><br/><font point-size = '15'>n = 43</font><br/>>, fillcolor = Lavender, height = 0.6]
+    g [label = <<b>Redo caused by MR</b><br/><font point-size = '15'>n = 6</font><br/>>, fillcolor = Aquamarine, height = 0.6]
+    h [label = <<b>Redo caused by MS</b><br/><font point-size = '15'>n = 1</font><br/>>, fillcolor = Aquamarine, height = 0.5]
+    i [label = <<b>Redo caused by MS</b><br/><font point-size = '15'>n = 14</font><br/>>, fillcolor = Aquamarine, height = 0.5]
+    j [label = <<b>Redo caused by MR</b><br/><font point-size = '15'>n = 2</font><br/>>, fillcolor = AquaMarine, height = 0.5]
+
+    # edge definitions with the node IDs
+    a -> {b c d}
+    b -> {e f}
+    e -> {j i} 
+    f -> {j i}
+    c -> {g h} [minlen = 2]
+    }
+", height = 300, width = 1000)
+```
+
+<br>
+
+## About the data
+
+>Hover over the pie slices for more information.
+
+<div align = "center">
+```{r echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
+A <- c("RING", "BAND", "NONE")
+B <- c(78, 34, 7)
+C <- c(17.9, 2.9, 0)
+D <- c(2.5, 17.6, 0)
+E <- c(20.5, 20.5, 0)
+
+df <- data.frame(A, B, C, D, E)
+
+
+txt <- paste0("<b>Redo caused by MS:</b> ",C, "%", " <br><b>Redo caused by MR:</b> ", D, "%", " <br><b>Total Redo:</b> ", E, "%")
+
+myhc_add_series_labels_values <- function (hc, labels, values, text, colors = NULL, ...) {
+  assertthat::assert_that(is.highchart(hc), is.numeric(values), 
+                          length(labels) == length(values))
+  df <- dplyr::data_frame(name = labels, y = values, text=txt)
+  if (!is.null(colors)) {
+    assert_that(length(labels) == length(colors))
+    df <- mutate(df, color = colors)
+  }
+  ds <- list_parse(df)
+  hc <- hc %>% hc_add_series(data = ds, ...)
+  hc
+}
+
+highchart() %>% 
+  hc_chart(type = "pie", data = df, height = 400) %>% 
+  myhc_add_series_labels_values(labels = A, values = B, text = txt, colors = c("#87CEFA","#20B2AA","#FF69B4"), dataLabels = list(color = "black", distance = 50))%>%   
+  myhc_add_series_labels_values(labels = A, values = B, text = txt, colors = c("#87CEFA","#20B2AA","#FF69B4"), dataLabels = list(color = "white", distance = -50, style = list(fontSize = "20px"), format = '{point.percentage:.1f} %' ))%>%    
+  hc_tooltip(crosshairs = TRUE, borderWidth = 5, sort = TRUE, shared = TRUE, table = TRUE,
+             pointFormat=paste('<br><b>n = </b> {point.y} patients<br>{point.text}')
+  ) %>%
+  hc_title(text = "N = 119 patients",
+           margin = 10,
+           style = list(useHTML = TRUE, fontWeight = 'bold'))
+```
+</div>
+
