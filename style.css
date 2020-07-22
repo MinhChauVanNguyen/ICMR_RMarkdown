@@ -32,3 +32,7 @@ table {
   border-radius:3px;
   font-size:13px;
 }
+
+#logo {
+  margin-left:-120px;
+}
