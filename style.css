@@ -12,14 +12,20 @@ pre {
 }
 
 .nav>li>a {
-position: relative;
-display: block;
-padding: 10px 15px;
-color:#FF00FF;
+  position: relative;
+  display: block;
+  padding: 10px 15px;
+  color:black;
+}
+
+.nav-pills>li>a{
+  border: 1px solid #337ab7;
+  border-radius:4px;
 }
 
 .nav>li[class = 'active']>a {
-font-weight:bold;
+  font-weight:bold;
+  background-color:#00BFFF !important;
 }
 
 table {
@@ -36,3 +42,8 @@ table {
 #logo {
   margin-left:-120px;
 }
+
+.shiny-input-panel{
+  padding: 0px 0px !important;
+}
+

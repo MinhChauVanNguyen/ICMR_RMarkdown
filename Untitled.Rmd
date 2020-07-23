@@ -2,16 +2,68 @@
 title: "Untitled"
 author: "Minh Chau Van Nguyen"
 date: "21/07/2020"
+runtime: shiny
 output: html_document
 ---
 
-```{r results="asis"}
-n <- 100
-x <- rnorm(n)
-y <- 2*x + rnorm(n)
-out <- lm(y ~ x)
-library(xtable)
-tab <- xtable(summary(out)$coef, digits=c(0, 2, 2, 1, 2))
-print(tab, type="html")
+```{r echo = FALSE,warning = FALSE, message = FALSE}
+library(pdftools)
+library(tm)
+# data processing packages
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(assertthat)
+# descriptive statistics
+library(highcharter)
+library(DiagrammeR)
+library(reshape2)
+library(echarts4r)
+# multinomial regression package
+library(nnet)
+library(effects)
+# survival analysis package
+library(survival)
+library(survminer)
+library(pander)
+```
 
+*Predictive interaction*
+```{r echo = FALSE}
+inputPanel(style = "background-color:mediumturquoise",
+  selectInput(inputId = "Age", label = "Age", choices = sort(unique(train$Age_group))),
+  selectInput(inputId = "Sex", label = "Sex", choices = unique(train$Sex)),
+  selectInput(inputId = "GROUP", label = "Group", choices = unique(train$GROUP)),
+  selectInput(inputId = "Ring_grp", label = "Ring", choices = unique(train$Ring_Group))
+)
+
+renderPrint({
+  newdata <- data.frame(Age_group = input$Age, Sex = input$Sex, GROUP = input$GROUP, Ring_Group = input$Ring_grp)
+  predict(model, newdata)
+})
+```
+
+```{r echo = FALSE}
+data <- read.csv("hospdat.csv", header = TRUE)
+data$Age_group <- factor(data$Age_group, levels = c('0-4 yrs', '5-9 yrs', '10-14 yrs', '15-18 yrs'))
+data$Cause_of_redo <- factor(data$Cause_of_redo, levels = c("NONE", "MR", "MS"))
+data$Sex <- factor(data$Sex)
+data$GROUP <- factor(data$GROUP, levels = c("NONE", "BAND", "RING"))
+data$Ring_Group <- factor(data$Ring_Group, levels = c("NONE", "<26", ">=26"))
+
+set.seed(12)
+train <- sample_frac(data, 0.8)
+model <- multinom(Cause_of_redo ~ Age_group + Sex + GROUP + Ring_Group, data = train)
+
+inputPanel(
+  selectInput(inputId = "Age", label = "Age", choices = unique(train$Age_group)),
+  selectInput(inputId = "Sex", label = "Sex", choices = unique(train$Sex)),
+  selectInput(inputId = "GROUP", label = "Group", choices = unique(train$GROUP)),
+  selectInput(inputId = "Ring_grp", label = "Ring", choices = unique(train$Ring_Group))
+)
+
+renderPrint({
+  newdata <- data.frame(Age_group = input$Age, Sex = input$Sex, GROUP = input$GROUP, Ring_Group = input$Ring_grp)
+  predict(model, newdata)
+})
 ```
