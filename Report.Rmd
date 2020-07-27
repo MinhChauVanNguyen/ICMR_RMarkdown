@@ -88,7 +88,7 @@ htmltools::img(src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAADgCAIA
 ```
 
 <div style = "margin-top:-60px;">
-**Author**: MD Hung Dung Van 
+**Author**: Minh Chau 
 <br>
 **Start date** : July 17, 2020
 <br>
@@ -110,18 +110,21 @@ htmltools::img(src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAADgCAIA
 ## {.tabset .tabset-pills}
 
 ### Design Study Objectives
-<div style = "margin-top:20px;">
-<span style="color:blue;">Population</span>: N = 119 patients under 18 years old with either a CE ring implant, a Band implant or neither of those implants.</div>
+<div style = "margin-top:20px;margin-bottom:15px;">
+<span style="color:blue;">Population</span>: N = 119 patients under 18 years old with either a classic Carpentier-Edwards (CE) ring implant, a Band implant or neither of those implants.</div>
+
 
 <span style="color:blue;">Theories</span>:
 
  - For patients with **< 26mm (small size) CE ring**, there is a higher chance of relapse (which leads to re-operation/redo) caused by <span style="background-color:#FFE1FF;">mitral stenosis (MS)</span>. 
  - For patients with **band**, there is a higher chance of relapse caused by <span style="background-color:#FFE1FF;">mitral regurgiation (MR)</span>
 
+
+
 <span style="color:blue;">Aim</span>: 
 
  - to determine whether the above are true by comparing the MS rate and the MR rate between the Band and CE ring groups in the population. 
- - to caculate the relapse (MS or MR) probability by sex.
+ - to caculate the relapse (MS or MR) probability grouped by age and sex.
 
   
 <span style="color:blue;">Methods used</span> : 
@@ -177,7 +180,7 @@ The data set contains variables on 119 patients. The outcome variable is ```Caus
   + "MS"
   + "MR"
 
-The data set has a total of 45 variables (after processing). Some of the predictor variables which are going to be used in the multinomial regression model are: 
+The data set has a total of 45 variables (after processing). Some of these predictor variables which are going to be used in the multinomial regression model are: 
 
  1. **Age_group**, four-level categorical variable describing the age groups:
     + 0-4 yrs
@@ -319,7 +322,7 @@ data_wide %>%
     e_title(
     text = sprintf(
       "Male: %s cases (%s%%) , Redo: %s cases | Female：%s cases (%s%%) , Redo: %s cases",
-       maleCount, round(maleCount/totalCount * 100), MaleRedo, femaleCount,  round(femaleCount/totalCount * 100), FemaleRedo),
+       maleCount, round(maleCount/totalCount * 100, 1), MaleRedo, femaleCount,  round(femaleCount/totalCount * 100, 1), FemaleRedo),
     subtext = "Age & Gender tornado chart",
     textStyle = list(fontSize = 20),
     subtextStyle = list(fontSize = 15)
@@ -532,7 +535,7 @@ plot(Effect("Age_group", model2),
 * ```survival```
 * ```survminer```
 
-<span style="color:blue">Method</span>: Kaplan-Meier non-parametric survival estimate. Kaplan-Meier curves are especially useful when the predictor variable is categorical (e.g.: treatment A vs treatment B; males vs females). 
+<span style="color:blue">Method</span>: <span style = "background-color:#FFE1FF;">Kaplan-Meier</span> non-parametric survival estimate. Kaplan-Meier curves are especially useful when the predictor variable is categorical (e.g.: treatment A vs treatment B; males vs females). 
 
 <span style="color:blue">Measures of interest</span>: time to relapse
 
