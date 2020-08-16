@@ -47,3 +47,7 @@ table {
   padding: 0px 0px !important;
 }
 
+p.caption {
+  font-size: 15px;
+  margin-left:-80px;
+}

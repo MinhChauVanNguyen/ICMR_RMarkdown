@@ -37,6 +37,7 @@ nocite: '@*'
 # word count
 library(pdftools)
 library(tm)
+library(knitr)
 # data processing packages
 library(plyr)
 library(dplyr)
@@ -55,7 +56,20 @@ library(survival)
 library(survminer)
 library(pander)
 
+# Determine the output format of the document
+outputFormat = opts_knit$get("rmarkdown.pandoc.to")
 
+# Figure and Table Caption Numbering, for HTML do it manually
+capFigNo = 2;
+
+
+# Function to add the Figure Number
+capFig = function(x){
+  if(outputFormat == 'html'){
+    x = paste0("Figure ",capFigNo,". ",x)
+    capFigNo <<- capFigNo + 1
+  }; x
+}
 
 fn_cound_words <- function(file) {
   txt <- pdf_text(file)
@@ -111,14 +125,14 @@ htmltools::img(src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAADgCAIA
 
 ### Design Study Objectives
 <div style = "margin-top:20px;margin-bottom:15px;">
-<span style="color:blue;">Population</span>: N = 119 patients under 18 years old with either a classic Carpentier-Edwards (CE) ring implant, a Band implant or neither of those implants.</div>
+<span style="color:blue;">Population</span>: N = 119 patients under 18 years old with heart diseases. These patients either a classic Carpentier-Edwards (CE) ring implant, a Band implant or neither of those implants.</div>
 
 
-<span style="color:blue;">Theories</span>:
+<span style="color:blue;">Research questions</span>:
 
- - For patients with **< 26mm (small size) CE ring**, there is a higher chance of relapse (which leads to re-operation/redo) caused by <span style="background-color:#FFE1FF;">mitral stenosis (MS)</span>. 
- - For patients with **band**, there is a higher chance of relapse caused by <span style="background-color:#FFE1FF;">mitral regurgiation (MR)</span>
-
+ - In the long term, there is a higher chance of patient having to re-operate due to<span style="background-color:#FFE1FF;">mitral stenosis (MS)</span> occurring post **< 26mm (small size) CE ring** Implant. 
+ - In the long term, there is a higher chance of patient having to re-operate due to<span style="background-color:#FFE1FF;">mitral regurgiation (MR)</span> occurring post **Band** Implant. 
+ 
 
 
 <span style="color:blue;">Aim</span>: 
@@ -173,21 +187,20 @@ grViz("digraph flowchart {
 
 *About the data*
 
-The data set contains variables on 119 patients. The outcome variable is ```Cause_of_redo``` (qualitative information). 
+The data set contains 44 explanatory features (excluding the outcome variable) on 119 patients. The outcome/response variable, ```Cause_of_redo``` is a categorical variable with 3 levels:
 
-* 3 levels
-  + "NONE"
-  + "MS"
-  + "MR"
+  + MS
+  + MR
+  + NONE
 
-The data set has a total of 45 variables (after processing). Some of these predictor variables which are going to be used in the multinomial regression model are: 
+Not all explantory variables were used in the analysis. In this briefing, the predictor variables used in the multinomial regression analysis are: 
 
  1. **Age_group**, four-level categorical variable describing the age groups:
     + 0-4 yrs
     + 5-9 yrs
     + 10-14 yrs
     + 16-18 yrs
- 2. **GROUP**, three-level categorical variable describing the three groups of interest, patients with band, patients with CE ring and patients with neither:
+ 2. **GROUP**, three-level categorical variable describing the types of patient with or without implants. More specifically, patients with Band, patients with CE ring and patients with neither:
     + NONE
     + BAND
     + RING
@@ -199,7 +212,9 @@ The data set has a total of 45 variables (after processing). Some of these predi
 
 <br>
 
-*Data Visualization*
+*Data Visualisation (hover over the graphs for more information)*
+
+The pie chart describes the distribution between patients with Band implants (28.6%), patients with Ring implants (65.5%) and those with neither implants (5.9%), where the number of cases for each group are 34, 78 and 7, respectively. In the long run, the total redo cases is 24 cases for N = 119 patients, where the redo rates for both Band and CE ring implant are 20.5% each and the redo rate for those with no implants is 0%. By eyeballing, the stacked bar graph on the right shows that the frequency of the redo cases in **0-4 yrs** age group is the highest and that there are no redo cases found in the **10-14 yrs** and **15-18 yrs** age groups. This visualisation can also be used to calculate the redo rate caused by the categories of the outcome variable ```Cause_of_redo``` for each Age group, where each bar represents the total number of cases for each Age group and each color of the bars represents the categories of the bars. 
 
 <div style = "margin-bottom:-115px; margin-top:30px;">
 ```{r echo = FALSE, warning = FALSE, message = FALSE}
@@ -230,8 +245,7 @@ pie <- highchart() %>%
   hc_chart(type = "pie", data = df, height = 350) %>% 
   myhc_add_series_labels_values(labels = A, values = B, text = txt, colors = c("#87CEFA","#20B2AA","#FF69B4"), dataLabels = list(color = "black", distance = 50))%>%   
   myhc_add_series_labels_values(labels = A, values = B, text = txt, colors = c("#87CEFA","#20B2AA","#FF69B4"), dataLabels = list(color = "white", distance = -50, style = list(fontSize = "20px"), format = '{point.percentage:.1f} %' ))%>%    
-  hc_tooltip(crosshairs = TRUE, borderWidth = 5, sort = TRUE, shared = TRUE, table = TRUE, pointFormat = paste('<br><b>n = </b> {point.y} patients<br>{point.text}')
-  ) %>%
+  hc_tooltip(crosshairs = TRUE, borderWidth = 5, sort = TRUE, shared = TRUE, table = TRUE, pointFormat = paste('<br><b>n = </b> {point.y} patients<br>{point.text}')) %>%
   hc_title(text = "N = 119 patients, redo = 24 cases",
            margin = 10,
            style = list(useHTML = TRUE, fontWeight = 'bold'))
@@ -248,24 +262,28 @@ new <- new[order(new$Age_group, new$Cause_of_redo, new$freq), ]
 
 hc <- highchart() %>%
   hc_chart(type = "column", height = 350, width = 400) %>%
-  hc_yAxis(title = list(text = "Cases", style = list(fontWeight = 'bold'))) %>%
-  hc_xAxis(categories = allAges$Age_group, title = list(text = "Age grp", style = list(fontWeight = 'bold'))) %>%
+  hc_yAxis(title = list(text = "No.of.cases", style = list(fontWeight = 'bold'))) %>%
+  hc_xAxis(categories = allAges$Age_group, title = list(text = "Age group", style = list(fontWeight = 'bold'))) %>%
   hc_plotOptions(column = list(
     dataLabels = list(enabled = FALSE),
     stacking = "normal",
+    borderColor = "#5ab1ef",
+    borderWidth = 2,
     enableMouseTracking = TRUE)
   ) %>%
   hc_series(list(name="None", data = new[new$Cause_of_redo == "NONE", ][,3], color = "#AFEEEE"),
            list(name="MR", data = new[new$Cause_of_redo == "MR", ][,3], color = "#ff83c1"),
             list(name="MS", data = new[new$Cause_of_redo == "MS", ][,3], color = "#7CFC00")) %>%
-  hc_title(text = "Age distribution of redo cases grouped by types of cause",
+  hc_title(text = "Age distribution of redo cases grouped by Cause_of_redo",
            margin = 10,
-           style = list(useHTML = TRUE, fontWeight = 'bold'))
+           style = list(useHTML = TRUE, fontWeight = 'bold')) %>%
+    hc_tooltip(headerFormat = "<b>{point.name}</b>", valueSuffix = " cases")
+  
 hw_grid(pie, hc, ncol = 2)
 ```
 </div>
 
-
+<div style = "margin-bottom:-75px">
 ```{r echo = FALSE, message = FALSE, warning = FALSE}
 newdat <- data[names(data) %in% c("Sex", "Age_group")]
 
@@ -328,6 +346,16 @@ data_wide %>%
     subtextStyle = list(fontSize = 15)
   ) 
 ```
+</div>
+
+<div style = "font-size:15px;align:center">
+<center>Figure 1: Descriptive statistics of the data</center></div>
+
+<div style="margin-top:20px"></div>
+Moving on to the Age and Gender tornado chart, it is evident that the most frequent age group in the population is the **0-4 yrs** age group, with 18 males and 27 females out of the total of 53 males and 66 females. It is also possible to calculate the redo rate for Female and Male, by dividing the number of redo cases by the total number of cases for each Gender. In summary, the redo rate for Female (22.7%) is higher than the redo rate for Male (17.0%). 
+
+
+<br>
 <hr>
 
 ### Multinomial Logistic Regresssion
@@ -337,6 +365,8 @@ data_wide %>%
 
 <br>
 $\underline{Step \hspace{.05in} 1}$: Relevel the baseline groups
+The baseline/reference group was releved to be those with neither a Band nor a Ring implant and belongs to the **0-4 yrs** age and **Female** group. 
+
 ```{r results = FALSE}
 data$Cause_of_redo <- factor(data$Cause_of_redo, levels = c("NONE", "MR", "MS"))
 data$Age_group <- factor(data$Age_group, levels = c('0-4 yrs', '5-9 yrs', '10-14 yrs', '15-18 yrs'))
@@ -346,9 +376,9 @@ data$Ring_Group <- factor(data$Ring_Group, levels = c("NONE", "<26", ">=26"))
 
 <br>
 
-$\underline{Step \hspace{.05in} 2}$: Split the data into random training and testing sets. 
+$\underline{Step \hspace{.05in} 2}$: Train the model 
 
-The model will attempt to learn the relationship on the training data and be evaluated on the test data. In this case, 80% of the data is used for training and 20% for testing.
+The multinomial regression model will attempt to learn the relationship on the training data and be evaluated on the test data. It's important to use new data when evaluating our model to prevent the likelihood of overfitting. In this case, split the data into 80% for training and 20% for test sets.  We also need to set a seed so that the samples of training and test sets stay consistent. 
 
 ```{r}
 set.seed(12)
@@ -360,6 +390,7 @@ test <- data[-sample_id,]
 <br>
 $\underline{Step \hspace{.05in} 3}$: Fit the model and obtain the results
 
+Next fit the model using the training set in R. 
 ```{r results = FALSE}
 model <- multinom(Cause_of_redo ~ Age_group + Sex + GROUP + Ring_Group, data = train)
 ```
@@ -370,6 +401,9 @@ summary(model)$coefficients
 <br>
 
 $\underline{Step \hspace{.05in} 4}$: Find the p-value of each coefficient
+
+Finally we compute the p-value of each coefficient in order to determine their significant impact on the outcome variable ```Cause_of_redo```. 
+
 ```{r}
 z <- summary(model)$coefficients/summary(model)$standard.errors
 p <- (1 - pnorm(abs(z), 0, 1)) * 2
@@ -378,22 +412,22 @@ p
 
 <br>
 
-**Comment**: Overall all coefficients (except for **SexM** variable and **Age_group5-9**) are statistically significant based on their p-values being smaller than 0.05. The model equation for the first row is then:
+**Comment**: Overall all variables (except for **SexM** variable and **Age_group5-9**) are statistically significant since their p-values are smaller than the significance level at 5%. The model equation for the first row (MR) is then:
 
 \[
 \scriptsize
 \begin{eqnarray}
-\text{ln}\bigg(\frac{Pr(\text{type} = \text{MR})}{Pr(\text{type = NONE})}\bigg) &= \beta_{10} + \beta_{11}(\text{age = 5-9 yrs}) + \beta_{12}(\text{age = 10-14 yrs})  
-+ \beta_{13}(\text{age = 15-18 yrs}) + \beta_{14}(\text{Sex = M}) \\   
-& + \beta_{15}(\text{grp = Band}) + \beta_{16}(\text{grp = Ring}) 
- + \beta_{17}(\text{Ring_grp = "<26"}) + \beta_{18}(\text{Ring_grp = ">=26"})
+\text{ln}\bigg(\frac{Pr(\text{Cause_of_redo} = \text{MR})}{Pr(\text{Cause_of_redo = "NONE"})}\bigg) &= \beta_{10} + \beta_{11}(\text{age = "5-9 yrs"}) + \beta_{12}(\text{age = "10-14 yrs"})  
++ \beta_{13}(\text{age = "15-18 yrs"}) \\
+& + \beta_{14}(\text{Sex = "Male"}) + \beta_{15}(\text{GROUP = "BAND"}) + \beta_{16}(\text{GROUP = "RING"}) \\
+& + \beta_{17}(\text{Ring_grp = "<26mm"}) + \beta_{18}(\text{Ring_grp = ">=26mm"})
 \end{eqnarray}
 \]
 
 For MR patients:
 
-  * $\beta_{15}$ The log odds of having to re-operate due to **MR** vs. having not to re-operate will increase by <span style = "color:red;">26.53103</span> if moving from **GROUP = "None"** to **GROUP =  "Band"**.
-  * $\beta_{16}$ The log odds of having to re-operate due to **MR** vs. having not to re-operate will increase by <span style = "color:red;">17.15680</span> if moving from **GROUP = "None"** to **GROUP =  "Ring"**.
+  * $\beta_{15}$ The log odds of having to re-operate due to **MR** vs. having not to re-operate will increase by <span style = "color:red;">26.53103</span> if moving from **GROUP = "NONE"** to **GROUP =  "BAND"**.
+  * $\beta_{16}$ The log odds of having to re-operate due to **MR** vs. having not to re-operate will increase by <span style = "color:red;">17.15680</span> if moving from **GROUP = "NONE"** to **GROUP =  "RING"**.
   * $\beta_{17}$ The log odds of having to re-operate due to **MR** vs. having not to re-operate will increase by 8.551873 if moving from **Ring_grp = "None"** to **Ring_grp =  "<26 mm"**.
   * $\beta_{18}$ The log odds of having to re-operate due to **MR** vs. having not to re-operate will increase by 8.604928 if moving from **Ring_grp = "None"** to **Ring_grp =  ">=26 mm"**.
 
@@ -411,14 +445,14 @@ The model equation for the second row is:
 
 For MS patients:
 
-  * <span style="background-color:yellow">$\beta_{25}$ The log odds of having to re-operate due to **MS** vs. having not to re-operate will decrease by 11.91916 if moving from **GROUP = "None"** to **GROUP =  "Band"**</span>.
+  * $\beta_{25}$ The log odds of having to re-operate due to **MS** vs. having not to re-operate will decrease by 11.91916 if moving from **GROUP = "None"** to **GROUP =  "Band"**.
   * $\beta_{26}$ The log odds of having to re-operate due to **MS** vs. having not to re-operate will increase by 20.27758 if moving from **GROUP = "None"** to **GROUP =  "Ring"**.
   * $\beta_{27}$ The log odds of having to re-operate due to **MS** vs. having not to re-operate will increase by <span style = "color:red;">11.654593</span> if moving from **Ring_grp = "None"** to **Ring_grp = "<26 mm"**.
   * $\beta_{28}$ The log odds of having to re-operate due to **MS** vs. having not to re-operate will increase by <span style = "color:red;">8.622985</span> if moving from **Ring_grp = "None"** to **Ring_grp = ">=26 mm"**.
   
 <br>
 
-For both MR and MS,
+For both MR and MS patients,
 
  * $\beta_{11}$ & $\beta_{21}$ The log odds of having to re-operate vs. having not to re-operate will increase if moving from **age = "0-4"** to **age = "5-9"**.
  * $\beta_{12}$ & $\beta_{22}$ The log odds of having to re-operate vs. having not to re-operate will decrease if moving from **age = "0-4"** to **age = "10-14"**.
@@ -428,13 +462,15 @@ For both MR and MS,
 
 **Comments**: Based on the above statistical findings, it is safe to assume that:
 
- - For patients with **< 26mm (small size) CE ring**, there is a higher chance of relapse caused by <span style="background-color:#FFE1FF;">mitral stenosis (MS)</span>. 
+ - For patients with **< 26mm (small size) CE ring** implant, there is a higher chance of  re-operation caused by <span style="background-color:#FFE1FF;">mitral stenosis (MS)</span>. 
  
- - For patients with **band**, there is a higher chance of relapse caused by <span style="background-color:#FFE1FF;">mitral regurgiation (MR)</span>
+ - For patients with **Band** implant, there is a higher chance of re-operation caused by <span style="background-color:#FFE1FF;">mitral regurgiation (MR)</span>
  
 <br>
 
-<span style = "font-size:30px;">Relative Risk</span>
+<span style = "font-size:30px;">Summary</span>
+
+***Relative Risks***
 
 The ratio of the probability of choosing one outcome category over the probability of choosing the baseline category is often referred as relative risk. The output coefficients are represented in the log of odds, hence relative risk can be computed by taking the exponential of the intercepts from the linear equation. 
 
@@ -442,26 +478,31 @@ The ratio of the probability of choosing one outcome category over the probabili
 exp(coef(model))
 ```
 
-<br>
+<div style = "margin-top:20px"></div>
 
-A few comments:
+**Comments**:
 
  * The relative risk ratio switching from **Age_group = 0-4 yrs** to **5-9 yrs** is <span style="color:red">4.002148</span> for redo caused by MR vs. no redo at all.
  * The relative risk ratio switching from **Age_group = 0-4 yrs** to **10-14 yrs** <span style="color:red">$8.88\times10^{-9}$</span> for redo caused by MS vs. no redo at all.
 
 <br>
 
-$\underline{Step \hspace{.05in} 5}$: Look at the predicted probabilities
+***Predicted probabilities***
+
+The predicted probability of the outcome variable's categories for each patient can be computed using the following command.
 
 ```{r}
 head(pp <- fitted(model))
 ```
 
-The probability of $n^{th}$ obs being "NONE", "MR" or "MS" shown in the above table can be interpreted in percentage. For example, the probability of the first observation being "NONE" is 100%, it being "MR" is 0.0% and and it being "MS" is 0.0%. Thus we can conclude that the patient from this observation did not have to have a re-operation. 
+The probability of $n^{th}$ obs being "NONE", "MR" or "MS" shown in the above table can be interpreted in percentage. For example, the probability of the first observation being "NONE" is 100%, it being "MR" is 0.0% and and it being "MS" is 0.0%. Thus we can conclude that this observation/patient did not have to have a re-operation in the long run. 
 
 <br>
 
-<span style = "font-size:30px;">Training vs Test sets</span>
+
+***Training vs Test Accuracy***
+
+The goal is to create a model that generalizes well to new data. For this reason, the performance of how well the model performs applied to both training and test data was evaluated. 
 
 ```{r}
 train$predicted <- predict(model, newdata = train, "class")
@@ -484,13 +525,13 @@ ctable2 <- table(test$Cause_of_redo, test$predicted)
 round((sum(diag(ctable2))/sum(ctable2))*100, 2)
 ```
 
-<br>
+
+<div style = "margin-top:20px"></div>
 
 **Comment**: <span style = "background-color:#FFE1FF;font-weight:bold;">Accuracy in training dataset is 86.32% and the accuracy of the test set is 87.5% </span>, which is slightly higher than that of the training data. This is not ideal since test accuracy should not be higher than that of training as the model is optimized for the latter. The model performs well overall because it performs well not only on the training data but also on the test (unseen) data.
  
 <br>
 
-<span style = "font-size:30px;">Summary</span>
 
 ```{r echo = FALSE, results = FALSE}
 set.seed(12)
@@ -508,9 +549,12 @@ model2 <- multinom(Cause_of_redo ~ Sex + Age_group, data = training)
 
 
 
-*Age group effect plot*
+***Age group effect plot***
 
-```{r fig.width = 8, echo = FALSE}
+The following plot is used to visualise the predictions from the multinomial logistic model.
+
+```{r fig.width = 8, echo = FALSE, fig.cap = capFig("Visualizing predictions from multinomial model"), fig.align = "center", fig.margin = TRUE}
+par(mar = c(4, 4, .1, .1))
 plot(Effect("Age_group", model2),
      main = "",
      line = list(multiline = TRUE),
@@ -518,7 +562,9 @@ plot(Effect("Age_group", model2),
      )
 ```
 
-**Comment:** The plot shows the difference in the average age trajectory between the "NONE", "MR" and "MS" groups, with the fitted response line for the "NONE" group being significantly above the latter. The fitted probability lines for for "MR" and "MS" are identical in 10-14 yrs and 15-18 yrs age groups, and different in 0-4 yrs and 5-9 where the MS line is higher.
+<div style = "margin-top:20px"></div>
+
+**Comment:** The plot shows the difference in the average age trajectory between the "NONE", "MR" and "MS" groups, with the fitted response line for the "NONE" group being significantly above the latter. The fitted probability lines for for "MR" and "MS" are identical in 10-14 yrs and 15-18 yrs age groups, and different in 0-4 yrs and 5-9 age groups where the "MS" line fluctuates.
  
 
 
@@ -535,13 +581,13 @@ plot(Effect("Age_group", model2),
 * ```survival```
 * ```survminer```
 
-<span style="color:blue">Method</span>: <span style = "background-color:#FFE1FF;">Kaplan-Meier</span> non-parametric survival estimate. Kaplan-Meier curves are especially useful when the predictor variable is categorical (e.g.: treatment A vs treatment B; males vs females). 
+<span style="color:blue">Method</span>: <span style = "background-color:#FFE1FF;">Kaplan-Meier</span> non-parametric survival estimate. Kaplan-Meier curves are especially useful when the predictor variable is categorical (e.g. treatment A vs treatment B; males vs females). 
 
-<span style="color:blue">Measures of interest</span>: time to relapse
+<span style="color:blue">Measures of interest</span>: 
 
  * status: censoring status 1 = censored, 2 = relapsed
  * sex: male = M, female = F
- * time: disease-free time in months
+ * time: time to relapse in months
 
 <br>
 
@@ -567,7 +613,7 @@ head(Surv(data$time, data$status), 20)
 
 <br>
 
-The following visualizations depict the survival rate (or disease-free rate in this case) without grouping and with grouping. 
+The below visualisations depict the survival rate without grouping and with grouping. The survival rate here is actually the rate of no re-operation required due to MR or MS or neither. We refer this to **disease-free** for short. 
 
 <br>
 
@@ -575,8 +621,13 @@ The following visualizations depict the survival rate (or disease-free rate in t
 my_theme <- theme_bw() + theme(
   plot.title = element_text(color = "black", size = 20,  hjust = 0.5)
 )
+```
 
+```{r}
 fit <- survfit(Surv(time, status) ~ 1, data = data)
+```
+
+```{r echo = FALSE, fig.cap= capFig("Survival curve and Risk table without grouping"), fig.align="center", fig.margin = TRUE}
 ggsurv <- ggsurvplot(fit = fit, data = data,
           title = "Survival curve without grouping",
           conf.int = TRUE,
@@ -592,6 +643,7 @@ ggsurv <- ggsurvplot(fit = fit, data = data,
 ggsurv$table <- ggsurv$table + theme_bw() +
   theme(plot.title = element_text(size = 13, face = "bold"),
          axis.text.y = element_text(color = "#8A2BE2"))
+par(mar = c(4, 4, 4, 4))
 
 ggsurv
 ```
@@ -602,31 +654,21 @@ ggsurv
 summary(fit)$table
 ```
 
-<br>
-**Comment**: The horizontal axis (x-axis) represents time in months, and the vertical axis (y-axis) shows the probability of having no disease or the proportion of people having no disease. The line represent survival curves of the population. A vertical drop in the curves indicates an event. The vertical tick mark on the curves means that a patient was censored at this time.
 
- * At time zero, the survival probability is 1.0 (or 100% of the participants are disease-free).
+<div style = "margin-top:20px"></div>
+
+
+**Comment**: The horizontal axis (x-axis) represents time in months, and the vertical axis (y-axis) shows the probability/proportion of having no disease. The stepwise purple line represent survival curve of the population. A vertical drop in the curve indicates an event. The vertical tick mark on the curve means that a patient was censored at this time.
+
+ * At time zero, the survival probability is 1.0 (or 100% of the patients are disease-free).
  * At time 300, the probability of survival is approximately 0.50 (or 50%).
  * The median survival time for the population is 308 months.
 
 <br>
 
-**Table of survival analysis showing the first 10 observations**
 
-```{r echo = FALSE, results = 'asis'}
-d <- data.frame(time = fit$time,
-                  n.risk = fit$n.risk,
-                  n.event = fit$n.event,
-                  n.censor = fit$n.censor,
-                  surv = fit$surv,
-                  upper = fit$upper,
-                  lower = fit$lower)
-pander(head(d, 10))
-```
 
-<br>
-
-```{r warning = FALSE, echo = FALSE, message=FALSE}
+```{r warning = FALSE, echo = FALSE, message=FALSE, fig.cap= capFig("Survival curve and Risk table with Sex grouping"), fig.align="center"}
 fit2 <- survfit(Surv(time, status) ~ Sex, data = data)
 
 ggsurv <- ggsurvplot(fit = fit2, data = data,
@@ -648,12 +690,13 @@ ggsurv$table <- ggsurv$table + theme_bw() +
 ggsurv
 ```
 
-**Comment**: The log-rank p-value for **Sex** variable is lower than significance level $\alpha = 0.05$ as shown in the plot above. This is also supported by the sex variable's p-value in multinomial logistic regression model. Therefore Sex is not a significant predictor hence has no effect on the survival/disease-free curve.  
+<div style = "margin-top:20px"></div>
+**Comment**: The log-rank p-value for **Sex** variable is lower than significance level $\alpha = 0.05$ as shown in the plot above (```p = 0.096). This is also supported by the p-value of the Sex coefficient in multinomial logistic regression model. In general, Sex is not a significant predictor and it can be concluded that this variable indeed has no effect on the disease-free curve.  
 
 
 <br>
 
-```{r warning = FALSE, echo = FALSE, message=FALSE}
+```{r warning = FALSE, echo = FALSE, message=FALSE, fig.cap= capFig("Survival curve and Risk table with Age grouping"), fig.align="center", fig.margin = TRUE}
 fit3 <- survfit(Surv(time, status) ~ Age_group, data = data)
 
 ggsurv <- ggsurvplot(fit = fit3, data = data,
@@ -671,9 +714,10 @@ ggsurv
 summary(fit3)$table
 ```
 
-<br>
 
-**Comment**: The log-rank p-value for **Age** variable is statistically significant. The survival curves show the 0-4 yrs age group to have less survival/disease-free advantage in comparison to the other groups. The median survival time for <span style = "background-color:#FFE1FF">age_group = 0-4 yrs</span> is <span style = "background-color:#FFE1FF">204 months</span>, as opposed to <span style = "background-color:#FFE1FF">242 months</span> for <span style = "background-color:#FFE1FF">age_group = 5-9 yrs</span>. 
+<div style = "margin-top:20px"></div>
+
+**Comment**: The log-rank p-value for **Age** variable is statistically significant (```p = 0.0015) at 5% level. The survival curves show the 0-4 yrs age group to have less survival/disease-free advantage in comparison to the other groups. The median survival time for <span style = "background-color:#FFE1FF">age_group = 0-4 yrs</span> is <span style = "background-color:#FFE1FF">204 months</span>, as opposed to <span style = "background-color:#FFE1FF">242 months</span> for <span style = "background-color:#FFE1FF">age_group = 5-9 yrs</span>. 
 
 <br>
 Further analysis to evaluate whether the differences between the age groups are statistically different can be done using a <span style = "background-color = #FFE1FF;font-weight:bold">Log-Rank test</span>.
@@ -683,9 +727,46 @@ surv_diff <- survdiff(Surv(time, status) ~ Age_group, data = data)
 surv_diff
 ```
 
+<div style = "margin-top:20px"></div>
+
+The log rank test for difference in survival gives a p-value of p = 0.001, indicating that the age groups differ significantly for the re-operation rate caused by MR, MS or neither in the long run for those with Band implants, Ring implants or neither.
+
 <br>
 
-The log rank test for difference in survival gives a p-value of p = 0.001, indicating that the age groups differ significantly in survival.
+*Table of survival analysis showing the first 10 observations*
+
+The following table summarizes a list of important components obtained from the ```survfit()``` function. 
+
+<div style = "margin-top:20px"></div>
+
+
+<hr style = "border-top:1px solid blue;">
+Notations:
+
+ - <span style = "background-color:#FFE1FF">n</span>: total number of subjects in each curve.
+ - <span style = "background-color:#FFE1FF">time</span>: the time points on the curve.
+ - <span style = "background-color:#FFE1FF">n.risk</span>: the number of subjects at risk at time t
+ - <span style = "background-color:#FFE1FF">n.event</span>: the number of events that occurred at time t.
+ - <span style = "background-color:#FFE1FF">n.censor</span>: the number of censored subjects, who exit the risk set, without an event, at time t.
+ - <span style = "background-color:#FFE1FF">lower,upper</span>: lower and upper confidence limits for the curve, respectively.
+ 
+<div style = "font-size:15px;">*Source* [http://www.sthda.com/english/wiki/survival-analysis-basics](http://www.sthda.com/english/wiki/survival-analysis-basics)</div>
+
+
+<hr style = "border-top:1px solid blue;">
+
+<div style = "margin-top:30px"></div>
+
+```{r echo = FALSE, results = 'asis'}
+d <- data.frame(time = fit$time,
+                  n.risk = fit$n.risk,
+                  n.event = fit$n.event,
+                  n.censor = fit$n.censor,
+                  surv = fit$surv,
+                  upper = fit$upper,
+                  lower = fit$lower)
+pander(head(d, 10))
+```
 
 <br>
 <hr>
