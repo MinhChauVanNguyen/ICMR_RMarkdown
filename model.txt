@@ -1,0 +1,15 @@
+
+model {
+for (i in 1:N){
+    ##Sampling model
+    yvec[i] ~ dmulti(p[i,1:J], 1)
+    for (j in 1:J){
+      log(q[i,j]) <- beta0 + beta1*X[i,1] + beta2*X[i,2] 
+      p[i,j] <- q[i,j]/sum(q[i,1:J])  
+    } 
+}
+   ##Priors
+    beta0 ~ dnorm(0, 0.001)
+    beta1 ~ dnorm(0, 0.001)
+    beta2 ~ dnorm(0, 0.001)
+}
