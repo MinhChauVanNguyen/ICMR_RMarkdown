@@ -130,8 +130,8 @@ htmltools::img(src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAADgCAIA
 
 <span style="color:blue;">Research questions</span>:
 
- - In the long term, there is a higher chance of patient having to re-operate due to<span style="background-color:#FFE1FF;">mitral stenosis (MS)</span> occurring post **< 26mm (small size) CE ring** Implant. 
- - In the long term, there is a higher chance of patient having to re-operate due to<span style="background-color:#FFE1FF;">mitral regurgiation (MR)</span> occurring post **Band** Implant. 
+ - In the long term, there is a higher chance of patient having to re-operate due to <span style="background-color:#FFE1FF;">mitral stenosis (MS)</span> occurring post **< 26mm (small size) CE ring** Implant. 
+ - In the long term, there is a higher chance of patient having to re-operate due to <span style="background-color:#FFE1FF;">mitral regurgiation (MR)</span> occurring post **Band** Implant. 
  
 
 
