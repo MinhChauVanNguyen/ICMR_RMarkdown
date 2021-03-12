@@ -81,7 +81,7 @@ fn_cound_words <- function(file) {
   dtm <- TermDocumentMatrix(corp5)
   dtm %>% as.matrix() %>% sum()
 }
-n_words <- fn_cound_words(paste0("Report2.pdf"))
+n_words <- fn_cound_words(paste0("Report_pdf_files.pdf"))
 
 data <- read.csv("hospdat.csv", header = TRUE)
 ```
